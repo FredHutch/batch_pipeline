@@ -1,4 +1,4 @@
-# save image as fredhutch/pipeline_kallisto
+# save image as fredhutch/pipeline_pizzly
 
 FROM fredhutch/fredhutch-ubuntu:16.04_20171030
 
@@ -13,13 +13,15 @@ RUN pip3 install boto3 sh
 
 RUN rm get-pip.py
 
-RUN curl -LO https://github.com/pachterlab/kallisto/releases/download/v0.43.1/kallisto_linux-v0.43.1.tar.gz
+RUN curl -LO curl -LO https://github.com/pmelsted/pizzly/releases/download/v0.37.3/pizzly_linux.tar.gz
 
-RUN tar zxf kallisto_linux-v0.43.1.tar.gz
+RUN tar zxf pizzly_linux.tar.gz
 
-RUN cp kallisto_linux-v0.43.1/kallisto /usr/local/bin/
+RUN cp pizzly /usr/local/bin/
 
-RUN rm -rf kallisto_linux-v0.43.1.tar.gz  kallisto_linux-v0.43.1
+RUN rm -rf pizzly_linux.tar.gz LICENSE README.md
+
+RUN mv test /usr/local/pizzly_test_files
 
 RUN curl -LO https://github.com/awslabs/aws-batch-helpers/archive/master.zip
 

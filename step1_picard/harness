@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# A test harness to run run_kallisto.py in Docker
+# A test harness to run run_picard.py in Docker
 # run something like this:
 
-# docker run  --rm --name kallisto -v ~/.aws:/root/.aws \
+# docker run  --rm --name picard -v ~/.aws:/home/neo/.aws \
 #   -v $(pwd):/work -w /work --entrypoint /work/harness \
-#   fredhutch/pipeline_kallisto
+#   fredhutch/ls2:picard.2
 
 export AWS_BATCH_JOB_ID='some-job-id-with-a:colon'
 export AWS_BATCH_JOB_ATTEMPT=1
@@ -17,4 +17,4 @@ export LIST_OF_SAMPLES=dummy,PAXFIG-03A-01R_withJunctionsOnGenome_dupsFlagged
 export AWS_BATCH_JOB_ARRAY_INDEX=1
 export AWS_PROFILE=hse
 
-python3 run_kallisto.py
+python3 run_picard.py

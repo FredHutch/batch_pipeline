@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-a shell-script-like python script to run kallisto
+a shell-script-like python script to run pizzly
 in AWS batch
 """
 
@@ -64,40 +64,33 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         else:
             sample = os.getenv("SAMPLE_NAME").strip()
         LOGGER.info("Sample is %s.", sample)
-        index = "GRCh37.87.idx"
-        fastqs = []
         aws = sh.aws.bake(_iter=True, _err_to_out=True, _out_bufsize=3000)
-        # get fastq files
-        LOGGER.info("Downloading fastq files...")
-        for i in range(1, 3):
-            fastq = "{}_r{}.fq.gz".format(sample, i)
-            fastqs.append(fastq)
-            if not os.path.exists(fastq): # for testing TODO remove
-                for line in aws("s3", "cp", "s3://{}/SR/picard_fq2/{}".format(bucket, fastq), "."):
-                    print(line)
-        r1 = fastqs[0] # pylint: disable=invalid-name
-        r2 = fastqs[1] # pylint: disable=invalid-name
-        # get index file
-        LOGGER.info("Downloading index file...")
-        if not os.path.exists(index): # for testing, TODO remove
-            for line in aws("s3", "cp", "s3://{}/SR/{}".format(bucket, index), "."):
+        LOGGER.info("Downloading fusion file...")
+        if not os.path.exists("fusion.txt"): # for testing TODO remove
+            for line in aws("s3", "cp",
+                            "s3://{}/SR/kallisto_out/{}/fusion.txt".format(bucket, sample), "."):
                 print(line)
         # create output dir
         os.makedirs(sample, exist_ok=True)
         # run kallisto, put output in file
-        kallisto = sh.kallisto.bake(_iter=True, _err_to_out=True, _long_sep=" ")
-        LOGGER.info("Running kallisto...")
-        with open("{}/kallisto.out".format(sample), "w") as klog:
-            for line in kallisto('quant', r1, r2, i=index, o=sample, b=30,
-                                 fusion="", rf_stranded=""):
-                LOGGER.info("kallisto: %s", line)
-                klog.write(line)
-                klog.flush()
+        pizzly = sh.pizzly.bake(_iter=True, _err_to_out=True, _long_sep=" ")
+        LOGGER.info("Running pizzly...")
+        pdir = "/usr/local/pizzly_test_files"
+        with open("{}/pizzly.out".format(sample), "w") as plog:
+            # FIXME this needs to change:
+            for line in pizzly("fusion.txt", k=31,
+                               gtf="{}/transcripts.gtf.gz".format(pdir),
+                               align_score=2, insert_size=400,
+                               fasta="{}/transcripts.fasta.gz".format(pdir),
+                               output="{}/some_prefix".format(sample),):
+                LOGGER.info("pizzly: %s", line)
+                plog.write(line)
+                plog.flush()
                 sys.stdout.flush()
-        # copy kallisto output to S3
-        LOGGER.info("Copying all kallisto output to S3...")
+        # copy pizzly output to S3
+        LOGGER.info("Copying all pizzly output to S3...")
         for line in aws("s3", "cp", "--sse", "AES256", "--recursive", "--include", "*",
-                        sample, "s3://{}/SR/kallisto_out/{}/".format(bucket, sample)):
+                        sample, "s3://{}/SR/pizzly_out/{}/".format(bucket, sample)):
             print(line)
         LOGGER.info("Completed without errors.")
     # handle errors

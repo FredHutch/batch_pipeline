@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-a shell-script-like python script to run kallisto
+a shell-script-like python script to run picard
 in AWS batch
 """
 
@@ -64,40 +64,44 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         else:
             sample = os.getenv("SAMPLE_NAME").strip()
         LOGGER.info("Sample is %s.", sample)
-        index = "GRCh37.87.idx"
-        fastqs = []
         aws = sh.aws.bake(_iter=True, _err_to_out=True, _out_bufsize=3000)
-        # get fastq files
-        LOGGER.info("Downloading fastq files...")
-        for i in range(1, 3):
-            fastq = "{}_r{}.fq.gz".format(sample, i)
-            fastqs.append(fastq)
-            if not os.path.exists(fastq): # for testing TODO remove
-                for line in aws("s3", "cp", "s3://{}/SR/picard_fq2/{}".format(bucket, fastq), "."):
-                    print(line)
-        r1 = fastqs[0] # pylint: disable=invalid-name
-        r2 = fastqs[1] # pylint: disable=invalid-name
-        # get index file
-        LOGGER.info("Downloading index file...")
-        if not os.path.exists(index): # for testing, TODO remove
-            for line in aws("s3", "cp", "s3://{}/SR/{}".format(bucket, index), "."):
+        java_dir = "/home/neo/.local/easybuild/software/Java/1.8.0_92/bin"
+        bam = "{}.bam".format(sample)
+        r1 = "{}_r1.fq.gz".format(sample) # pylint: disable=invalid-name
+        r2 = "{}_r2.fq.gz".format(sample) # pylint: disable=invalid-name
+        # add java_dir to path
+        os.environ['PATH'] += ":" + java_dir
+        ebrootpicard = "/home/neo/.local/easybuild/software/picard/2.13.2-Java-1.8.0_92/"
+        LOGGER.info("Downloading bam file...")
+        if not os.path.exists(bam): # for testing TODO remove
+            for line in aws("s3", "cp",
+                            "s3://{}/SR/{}".format(bucket, bam), "."):
                 print(line)
-        # create output dir
-        os.makedirs(sample, exist_ok=True)
-        # run kallisto, put output in file
-        kallisto = sh.kallisto.bake(_iter=True, _err_to_out=True, _long_sep=" ")
-        LOGGER.info("Running kallisto...")
-        with open("{}/kallisto.out".format(sample), "w") as klog:
-            for line in kallisto('quant', r1, r2, i=index, o=sample, b=30,
-                                 fusion="", rf_stranded=""):
-                LOGGER.info("kallisto: %s", line)
-                klog.write(line)
-                klog.flush()
+        # run picard, put output in file
+        java = sh.java.bake(_iter=True, _err_to_out=True, _long_sep=" ")
+        LOGGER.info("Running picard...")
+        logfile = "{}_picard.stderr".format(sample)
+        with open(logfile, "w") as plog:
+            for line in java("-Xmx6g", "-Xms2g", "-jar",
+                             "{}/picard.jar".format(ebrootpicard),
+                             "SamToFastq", "QUIET=true",
+                             "INCLUDE_NON_PF_READS=true",
+                             "VALIDATION_STRINGENCY=SILENT",
+                             "MAX_RECORDS_IN_RAM=250000", "I={}".format(bam),
+                             "F={}".format(r1), "F2={}".format(r2)):
+                LOGGER.info("picard: %s", line)
+                plog.write(line)
+                plog.flush()
                 sys.stdout.flush()
-        # copy kallisto output to S3
-        LOGGER.info("Copying all kallisto output to S3...")
-        for line in aws("s3", "cp", "--sse", "AES256", "--recursive", "--include", "*",
-                        sample, "s3://{}/SR/kallisto_out/{}/".format(bucket, sample)):
+        # copy picard output to S3
+        LOGGER.info("Copying picard output to S3...")
+        for item in [r1, r2]:
+            for line in aws("s3", "cp",
+                            item, "s3://{}/SR/picard_fq2/".format(bucket),
+                            sse="AES256"):
+                print(line)
+        for line in aws("s3", "cp", logfile,
+                        "s3://{}/SR/picard_fq2/".format(bucket), sse="AES256"):
             print(line)
         LOGGER.info("Completed without errors.")
     # handle errors

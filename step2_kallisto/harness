@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# A test harness to run run_kallisto.py in Docker
+# run something like this:
+
+# docker run  --rm --name kallisto -v ~/.aws:/root/.aws \
+#   -v $(pwd):/work -w /work --entrypoint /work/harness \
+#   fredhutch/pipeline_kallisto
+
+export AWS_BATCH_JOB_ID='some-job-id-with-a:colon'
+export AWS_BATCH_JOB_ATTEMPT=1
+
+export BUCKET_NAME=fh-pi-meshinchi-s
+# export SAMPLE_NAME=PAWZNG-03A-01R_withJunctionsOnGenome_dupsFlagged
+# export SAMPLE_NAME=PAXFIG-03A-01R_withJunctionsOnGenome_dupsFlagged
+export LIST_OF_SAMPLES=dummy,PAXFIG-03A-01R_withJunctionsOnGenome_dupsFlagged
+export AWS_BATCH_JOB_ARRAY_INDEX=1
+export AWS_PROFILE=hse
+
+echo in harness, SAMPLE_NAME is $SAMPLE_NAME
+
+
+# aws s3 ls
+
+python3 run_kallisto.py

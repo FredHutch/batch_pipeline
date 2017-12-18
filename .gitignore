@@ -1,0 +1,5 @@
+*.fq.gz
+*.idx
+step2_kallisto/picardout.csv
+step2_kallisto/PAXFIG-03A-01R_withJunctionsOnGenome_dupsFlagged/*
+log/

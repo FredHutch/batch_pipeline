@@ -7,3 +7,5 @@ log/
 *.stderr
 Picard_ForDocker_addMemSettings-dtenenba.sh
 tryit.sh
+step*.out
+audit/

@@ -68,7 +68,6 @@ class BatchJobRunner(sciluigi.Task):
 
     def run(self):
         self.job_def_revision = get_latest_jobdef_revision(self.job_def_name)
-        self.job_name = self.pipeline_name + "-picard-step-" + USER
         jobdef = self.job_def_name + ":" + str(self.job_def_revision)
         with open(self.sample_list_file) as filehandle:
             samples = filehandle.readlines()
@@ -86,7 +85,7 @@ class BatchJobRunner(sciluigi.Task):
         ]
 
 
-        self.submit_args = dict(jobName=self.job_name, jobQueue=self.queue,
+        self.submit_args = dict(jobQueue=self.queue,
                                 arrayProperties=dict(size=array_size),
                                 jobDefinition=jobdef,
                                 containerOverrides=dict(environment=env))
@@ -99,11 +98,14 @@ class StepOneJobRunner(BatchJobRunner):
     script_url = "s3://fh-pi-meshinchi-s/SR/dtenenba-scripts/run_picard.py"
     def out_jobid(self):
         "return job id"
-        return sciluigi.TargetInfo(self, self.job_id, is_tmp=True)
+        return sciluigi.TargetInfo(self, "step1.out")
     def run(self):
         super(StepOneJobRunner, self).run()
+        self.submit_args['jobName'] = self.pipeline_name + "-picard-step-" + USER
         response = BATCH.submit_job(**self.submit_args)
         self.job_id = response['jobId']
+        with self.out_jobid().open('w') as filehandle:
+            filehandle.write(self.job_id)
         print("Job ID for picard parent job is {}.".format(self.job_id))
 
 
@@ -114,12 +116,17 @@ class StepTwoJobRunner(BatchJobRunner):
     in_step1 = None
     def out_jobid(self):
         "return job id"
-        return sciluigi.TargetInfo(self, self.job_id, is_tmp=True)
+        return sciluigi.TargetInfo(self, "step2.out")
     def run(self):
         super(StepTwoJobRunner, self).run()
-        self.submit_args['dependsOn'] = dict(jobId=self.in_step1, type="N_TO_N")
+        self.submit_args['jobName'] = self.pipeline_name + "-kallisto-step-" + USER
+        with self.in_step1().open() as in_f: # pylint: disable=not-callable
+            job_id = in_f.read()
+        self.submit_args['dependsOn'] = [dict(jobId=job_id, type="N_TO_N")]
         response = BATCH.submit_job(**self.submit_args)
         self.job_id = response['jobId']
+        with self.out_jobid().open('w') as filehandle:
+            filehandle.write(self.job_id)
         print("Job ID for kallisto parent job is {}.".format(self.job_id))
 
 
@@ -130,15 +137,20 @@ class StepThreeJobRunner(BatchJobRunner):
     in_step2 = None
     def out_jobid(self):
         "return job id"
-        return sciluigi.TargetInfo(self, self.job_id, is_tmp=True)
+        return sciluigi.TargetInfo(self, "step3.out")
     def run(self):
         super(StepThreeJobRunner, self).run()
-        self.submit_args['dependsOn'] = dict(jobId=self.in_step2, type="N_TO_N")
+        self.submit_args['jobName'] = self.pipeline_name + "-pizzly-step-" + USER
+        with self.in_step2().open() as in_f: # pylint: disable=not-callable
+            job_id = in_f.read()
+        self.submit_args['dependsOn'] = [dict(jobId=job_id, type="N_TO_N")]
         response = BATCH.submit_job(**self.submit_args)
         self.job_id = response['jobId']
         print("Job ID for kallisto parent job is {}.".format(self.job_id))
 
         self.job_id = response['jobId']
+        with self.out_jobid().open('w') as filehandle:
+            filehandle.write(self.job_id)
         print("Job ID for pizzly parent job is {}.".format(self.job_id))
 
 
@@ -157,6 +169,13 @@ def get_latest_jobdef_revision(jobdef_name): # FIXME handle pagination
 
 def main():
     "handle args and run workflow"
+    # remove old files
+    print("Removing step files from previous runs...")
+    for i in range(1, 4):
+        stepfile = "step{}.out".format(i)
+        if os.path.exists(stepfile):
+            os.remove(stepfile)
+
     sciluigi.run_local(main_task_cls=WF)
 
 if __name__ == "__main__":

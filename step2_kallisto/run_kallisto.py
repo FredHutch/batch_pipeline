@@ -119,5 +119,4 @@ if __name__ == "__main__":
     logging.basicConfig(format=FORMAT)
     LOGGER = logging.getLogger()
     LOGGER.setLevel(logging.INFO)
-    LOGGER.critical("hi there")
     main()

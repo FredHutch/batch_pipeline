@@ -1,0 +1,35 @@
+{
+    "jobDefinitionName": "pipeline-step2-kallisto",
+    "type": "container",
+    "containerProperties": {
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/docker_scratch"
+                },
+                "name": "docker_scratch"
+            }
+        ],
+        "jobRoleArn": "arn:aws:iam::064561331775:role/fh-pi-meshinchi-s-batchtask",
+        "mountPoints": [
+            {
+                "readOnly": false,
+                "sourceVolume": "docker_scratch",
+                "containerPath": "/scratch"
+            }
+        ],
+        "environment": [
+          {
+            "name": "BATCH_FILE_TYPE",
+            "value": "script"
+          },
+          {
+            "name": "BUCKET_NAME",
+            "value": "fh-pi-meshinchi-s"
+          }
+        ],
+        "image": "fredhutch/pipeline_kallisto",
+        "vcpus": 1,
+        "memory": 7000
+    }
+}

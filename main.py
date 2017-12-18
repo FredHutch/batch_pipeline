@@ -4,8 +4,8 @@ main workflow class, etc.
 
 Run me like this:
 
-python3 main.py --queue=queuename --bucket_name=mybucketname \
-  --pipeline_name=a-name-for-this-job --sample_list_file=a_filename
+python3 main.py --queue=q-queue-name --bucket-name=a-bucket-name \
+  --pipeline-name='a-name-for-this-pipeline' --sample-list-file=afilename
 
 Where `afilename` is a file containing a list of sample names, one
 per line.
@@ -158,25 +158,6 @@ def get_latest_jobdef_revision(jobdef_name): # FIXME handle pagination
 def main():
     "handle args and run workflow"
     sciluigi.run_local(main_task_cls=WF)
-
-#     required_args = ['queue', 'bucket_name', 'pipeline_name', 'sample_list_file']
-#     ok_ = True
-#     for arg in required_args:
-#         match = [x for x in sys.argv if x.startswith("--{}".format(arg))]
-#         if not match:
-#             ok_ = False
-#             break
-#     if not ok_:
-#         print("""
-# The following arguments are required:
-#
-# --queue=(The name of the queue)
-# --bucket_name=(The name of your S3 bucket)
-# --pipeline_name=(A name for this set of jobs)
-# --sample_list_file=(The name of a file containing sample names, one per line).
-#         """)
-#         sys.exit(1)
-#     sciluigi.run_local(main_task_cls=WF)
 
 if __name__ == "__main__":
     BATCH = boto3.client("batch")

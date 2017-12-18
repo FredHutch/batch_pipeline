@@ -44,7 +44,7 @@ class WF(sciluigi.WorkflowTask):
         step2.in_step1 = step1.out_jobid
 
 
-        step3 = self.new_task('step3', StepTwoJobRunner, queue=self.queue,
+        step3 = self.new_task('step3', StepThreeJobRunner, queue=self.queue,
                               bucket_name=self.bucket_name,
                               pipeline_name=self.pipeline_name,
                               sample_list_file=self.sample_list_file)

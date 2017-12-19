@@ -44,6 +44,7 @@ def check_vars():
 
 def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     "do the work"
+    LOGGER.info("hostname is %s", os.getenv("HOSTNAME"))
     is_array_job = check_vars()
     job_id = os.getenv("AWS_BATCH_JOB_ID").replace(":", "-")
     # use a scratch directory that no other jobs on this instance will overwrite

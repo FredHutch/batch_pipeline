@@ -8,6 +8,7 @@ import os
 import logging
 import shutil
 import sys
+import time
 import traceback
 
 import sh
@@ -44,6 +45,7 @@ def check_vars():
 
 def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     "do the work"
+    LOGGER.info("hostname is %s", os.getenv("HOSTNAME"))
     is_array_job = check_vars()
     job_id = os.getenv("AWS_BATCH_JOB_ID").replace(":", "-")
     # use a scratch directory that no other jobs on this instance will overwrite
@@ -66,39 +68,41 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         LOGGER.info("Sample is %s.", sample)
         index = "GRCh37.87.idx"
         fastqs = []
-        aws = sh.aws.bake(_iter=True, _err_to_out=True, _out_bufsize=3000)
+        #aws = sh.aws.bake(_iter=True, _err_to_out=True, _out_bufsize=3000)
         # get fastq files
         LOGGER.info("Downloading fastq files...")
         for i in range(1, 3):
             fastq = "{}_r{}.fq.gz".format(sample, i)
             fastqs.append(fastq)
             if not os.path.exists(fastq): # for testing TODO remove
-                for line in aws("s3", "cp", "s3://{}/SR/picard_fq2/{}".format(bucket, fastq), "."):
-                    print(line)
+                LOGGER.info(sh.aws("s3", "cp",
+                                   "s3://{}/SR/picard_fq2/{}".format(bucket, fastq), "."))
+                time.sleep(5)
         r1 = fastqs[0] # pylint: disable=invalid-name
         r2 = fastqs[1] # pylint: disable=invalid-name
         # get index file
         LOGGER.info("Downloading index file...")
         if not os.path.exists(index): # for testing, TODO remove
-            for line in aws("s3", "cp", "s3://{}/SR/{}".format(bucket, index), "."):
-                print(line)
+            LOGGER.info(sh.aws("s3", "cp", "s3://{}/SR/{}".format(bucket, index), "."))
+            time.sleep(5)
         # create output dir
         os.makedirs(sample, exist_ok=True)
+        LOGGER.info("downloaded files, listing directory...")
+        LOGGER.info(sh.ls("-l"))
         # run kallisto, put output in file
-        kallisto = sh.kallisto.bake(_iter=True, _err_to_out=True, _long_sep=" ")
+        # kallisto = sh.kallisto.bake(_iter=True, _err_to_out=True, _long_sep=" ")
         LOGGER.info("Running kallisto...")
-        with open("{}/kallisto.out".format(sample), "w") as klog:
-            for line in kallisto('quant', r1, r2, i=index, o=sample, b=30,
-                                 fusion="", rf_stranded=""):
-                LOGGER.info("kallisto: %s", line)
-                klog.write(line)
-                klog.flush()
-                sys.stdout.flush()
+        sh.kallisto('quant', "-i", index, "-o", sample, "-b",
+                    30, "--fusion", "--rf-stranded", r1, r2,
+                    _err_to_out=True, _out="{}/kallisto.out".format(sample))
+        LOGGER.info("kallisto output:")
+        for line in sh.cat("{}/kallisto.out".format(sample), _iter=True):
+            LOGGER.info(line)
         # copy kallisto output to S3
         LOGGER.info("Copying all kallisto output to S3...")
-        for line in aws("s3", "cp", "--sse", "AES256", "--recursive", "--include", "*",
-                        sample, "s3://{}/SR/kallisto_out/{}/".format(bucket, sample)):
-            print(line)
+        LOGGER.info(sh.aws("s3", "cp", "--sse", "AES256", "--recursive", "--include", "*",
+                           sample, "s3://{}/SR/kallisto_out/{}/".format(bucket, sample)))
+            # print(line)
         LOGGER.info("Completed without errors.")
     # handle errors
     except Exception: # pylint: disable=broad-except

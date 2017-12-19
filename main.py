@@ -12,15 +12,22 @@ per line.
 
 """
 
+import datetime
+import logging
 import os
 import sys
-import warnings
-
 import boto3
 
-with warnings.catch_warnings():
-    warnings.filterwarnings('ignore', ".*psycopg2.*", )
-    import sciluigi # FIXME silence warning this causes
+
+LOG = logging.getLogger('sciluigi-interface')
+
+
+# with write_to_stream:
+print("Ignore this warning:", file=sys.stderr)
+# FIXME silence warning this causes:
+import sciluigi # pylint: disable=wrong-import-position
+
+
 
 class WF(sciluigi.WorkflowTask):
     "workflow class"
@@ -30,6 +37,10 @@ class WF(sciluigi.WorkflowTask):
     sample_list_file = sciluigi.Parameter()
 
     def workflow(self):
+        now = datetime.datetime.now()
+        self.pipeline_name = self.pipeline_name + "-" + now.strftime("%Y%m%d%H%M%S")
+        LOG.info("Pipeline name is %s.", self.pipeline_name)
+
         step1 = self.new_task('step1', StepOneJobRunner, queue=self.queue,
                               bucket_name=self.bucket_name,
                               pipeline_name=self.pipeline_name,
@@ -76,7 +87,7 @@ class BatchJobRunner(sciluigi.Task):
         sample_list = ",".join(samples)
         array_size = len(samples)
         if array_size < 2:
-            print("You must specify at least two samples to run an array job!")
+            LOG.info("You must specify at least two samples to run an array job!")
             sys.exit(1)
         env = [
             dict(name="BUCKET_NAME", value=self.bucket_name),
@@ -95,7 +106,7 @@ class StepOneJobRunner(BatchJobRunner):
     "runner for first step in pipeline"
     job_def_name = "pipeline-step1-picard"
     # FIXME task should automatically copy script to S3 before running
-    script_url = "s3://fh-pi-meshinchi-s/SR/dtenenba-scripts/run_picard.py"
+    script_url = "s3://{}/SR/dtenenba-scripts/run_picard.py".format(self.bucket_name)
     def out_jobid(self):
         "return job id"
         return sciluigi.TargetInfo(self, "step1.out")
@@ -106,13 +117,13 @@ class StepOneJobRunner(BatchJobRunner):
         self.job_id = response['jobId']
         with self.out_jobid().open('w') as filehandle:
             filehandle.write(self.job_id)
-        print("Job ID for picard parent job is {}.".format(self.job_id))
+        LOG.info("Job ID for picard parent job is %s.", self.job_id)
 
 
 class StepTwoJobRunner(BatchJobRunner):
     "runner for second step in pipeline"
     job_def_name = "pipeline-step2-kallisto"
-    script_url = "s3://fh-pi-meshinchi-s/SR/dtenenba-scripts/run_kallisto.py"
+    script_url = "s3://{}/SR/dtenenba-scripts/run_kallisto.py".format(self.bucket_name)
     in_step1 = None
     def out_jobid(self):
         "return job id"
@@ -127,13 +138,13 @@ class StepTwoJobRunner(BatchJobRunner):
         self.job_id = response['jobId']
         with self.out_jobid().open('w') as filehandle:
             filehandle.write(self.job_id)
-        print("Job ID for kallisto parent job is {}.".format(self.job_id))
+        LOG.info("Job ID for kallisto parent job is %s.", self.job_id)
 
 
 class StepThreeJobRunner(BatchJobRunner):
     "runner for third step in pipeline"
     job_def_name = "pipeline-step3-pizzly"
-    script_url = "s3://fh-pi-meshinchi-s/SR/dtenenba-scripts/run_pizzly.py"
+    script_url = "s3://{}/SR/dtenenba-scripts/run_pizzly.py".format(self.bucket_name)
     in_step2 = None
     def out_jobid(self):
         "return job id"
@@ -146,12 +157,9 @@ class StepThreeJobRunner(BatchJobRunner):
         self.submit_args['dependsOn'] = [dict(jobId=job_id, type="N_TO_N")]
         response = BATCH.submit_job(**self.submit_args)
         self.job_id = response['jobId']
-        print("Job ID for kallisto parent job is {}.".format(self.job_id))
-
-        self.job_id = response['jobId']
         with self.out_jobid().open('w') as filehandle:
             filehandle.write(self.job_id)
-        print("Job ID for pizzly parent job is {}.".format(self.job_id))
+        LOG.info("Job ID for pizzly parent job is %s.", self.job_id)
 
 
 

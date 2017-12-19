@@ -106,11 +106,11 @@ class StepOneJobRunner(BatchJobRunner):
     "runner for first step in pipeline"
     job_def_name = "pipeline-step1-picard"
     # FIXME task should automatically copy script to S3 before running
-    script_url = "s3://{}/SR/dtenenba-scripts/run_picard.py".format(self.bucket_name)
     def out_jobid(self):
         "return job id"
         return sciluigi.TargetInfo(self, "step1.out")
     def run(self):
+        self.script_url = "s3://{}/SR/dtenenba-scripts/run_picard.py".format(self.bucket_name)
         super(StepOneJobRunner, self).run()
         self.submit_args['jobName'] = self.pipeline_name + "-picard-step-" + USER
         response = BATCH.submit_job(**self.submit_args)
@@ -123,12 +123,12 @@ class StepOneJobRunner(BatchJobRunner):
 class StepTwoJobRunner(BatchJobRunner):
     "runner for second step in pipeline"
     job_def_name = "pipeline-step2-kallisto"
-    script_url = "s3://{}/SR/dtenenba-scripts/run_kallisto.py".format(self.bucket_name)
     in_step1 = None
     def out_jobid(self):
         "return job id"
         return sciluigi.TargetInfo(self, "step2.out")
     def run(self):
+        self.script_url = "s3://{}/SR/dtenenba-scripts/run_kallisto.py".format(self.bucket_name)
         super(StepTwoJobRunner, self).run()
         self.submit_args['jobName'] = self.pipeline_name + "-kallisto-step-" + USER
         with self.in_step1().open() as in_f: # pylint: disable=not-callable
@@ -144,12 +144,12 @@ class StepTwoJobRunner(BatchJobRunner):
 class StepThreeJobRunner(BatchJobRunner):
     "runner for third step in pipeline"
     job_def_name = "pipeline-step3-pizzly"
-    script_url = "s3://{}/SR/dtenenba-scripts/run_pizzly.py".format(self.bucket_name)
     in_step2 = None
     def out_jobid(self):
         "return job id"
         return sciluigi.TargetInfo(self, "step3.out")
     def run(self):
+        self.script_url = "s3://{}/SR/dtenenba-scripts/run_pizzly.py".format(self.bucket_name)
         super(StepThreeJobRunner, self).run()
         self.submit_args['jobName'] = self.pipeline_name + "-pizzly-step-" + USER
         with self.in_step2().open() as in_f: # pylint: disable=not-callable

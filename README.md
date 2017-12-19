@@ -20,7 +20,7 @@ This example implements one such process, consisting of three tasks.
 
 * Download the `fastq` files (produced in Task 1) from S3
 * Run [kallisto](https://pachterlab.github.io/kallisto/) on them.
-* Upload the output (a `fusion.txt`) file to S3.
+* Upload the output (a `fusion.txt` file) to S3.
 
 ### Task 3:
 
@@ -78,8 +78,8 @@ So the first job must be started so that we can get its job ID, and we then
 use that ID in the second job to declare a dependency on the first one,
 and likewise for the third.
 
-We can pass a list of samples to the jobs, as a comma-delimited
-environment variable (called `LIST_OF_SAMPLES`).
+We pass a list of samples to the jobs, by providing a text
+file containing one sample name per line.
 Assuming we passed a list of 10 samples, 10 `picard` jobs would start
 right away. When one of these jobs finishes, the corresponding `kallisto`
 job will begin.

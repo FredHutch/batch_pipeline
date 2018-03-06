@@ -122,8 +122,13 @@ pip3 install --user pipenv
 `PATH`, environment variable as discussed
 [here](https://askubuntu.com/questions/60218/how-to-add-a-directory-to-the-path)).
 
+Install dependencies (you only need to do this once):
 
-Install dependencies and activate your virtual environment:
+```
+pipenv install
+```
+
+Activate your virtual environment:
 
 ```
 pipenv shell

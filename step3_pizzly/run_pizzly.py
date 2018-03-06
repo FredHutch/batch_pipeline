@@ -83,7 +83,7 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
                                gtf="{}/transcripts.gtf.gz".format(pdir),
                                align_score=2, insert_size=400,
                                fasta="{}/transcripts.fasta.gz".format(pdir),
-                               output="{}/some_prefix".format(sample),):
+                               output="{}/{}".format(sample, sample),):
                 LOGGER.info("pizzly: %s", line)
                 plog.write(line)
                 plog.flush()

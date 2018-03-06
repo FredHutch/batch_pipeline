@@ -103,23 +103,37 @@ cd batch_pipeline
 ```
 
 Install [pipenv](https://docs.pipenv.org/#install-pipenv-today) if it is
-not already installed. On the `rhino` systems you can do this as follows:
+not already installed. On the `rhino` systems `pipenv` is already installed
+if you install a recent Python:
 
 ```
-ml Python/3.6.3-foss-2016b-fh1 # always type this command at the start of a new
+ml Python/3.6.4-foss-2016b-fh1 # always type this command at the start of a new
                                # session when working with this example.
+```
+
+On other systems, install `pipenv` yourself:
+
+```
 pip3 install --user pipenv
 ```
 
-Install dependencies and activate your virtual environment:
+
+(If the pipenv command is not found, you may need to add `~/.local/bin` to your
+`PATH`, environment variable as discussed
+[here](https://askubuntu.com/questions/60218/how-to-add-a-directory-to-the-path)).
+
+Install dependencies (you only need to do this once):
+
+```
+pipenv install
+```
+
+Activate your virtual environment:
 
 ```
 pipenv shell
 ```
 
-(If the pipenv command is not found, you may need to add `~/.local/bin` to your
-`PATH`, environment variable as discussed
-[here](https://askubuntu.com/questions/60218/how-to-add-a-directory-to-the-path)).
 
 Make sure you have obtained [S3](https://teams.fhcrc.org/sites/citwiki/SciComp/Pages/Getting%20AWS%20Credentials.aspx)
 credentials and the [additional permissions](https://fredhutch.github.io/aws-batch-at-hutch-docs/)

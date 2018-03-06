@@ -1,5 +1,11 @@
 # save image as fredhutch/pipeline_pizzly
 
+# build me like this:
+
+# aws s3 cp s3://fh-pi-meshinchi-s/SR/GRCh37/Homo_sapiens.GRCh37.87.gtf .
+# aws s3 cp s3://fh-pi-meshinchi-s/SR/GRCh37/Homo_sapiens.GRCh37.cdna.all.fa .
+# docker build -t fredhutch/pipeline_pizzly .
+
 FROM fredhutch/fredhutch-ubuntu:16.04_20171030
 
 # aws, curl, git, and unzip are already installed
@@ -22,6 +28,10 @@ RUN cp pizzly /usr/local/bin/
 RUN rm -rf pizzly_linux.tar.gz LICENSE README.md
 
 RUN mv test /usr/local/pizzly_test_files
+
+ADD Homo_sapiens.GRCh37.87.gtf.gz /usr/local/pizzly_test_files/
+
+ADD Homo_sapiens.GRCh37.cdna.all.fa /usr/local/pizzly_test_files/
 
 RUN curl -LO https://github.com/awslabs/aws-batch-helpers/archive/master.zip
 

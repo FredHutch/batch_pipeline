@@ -80,9 +80,9 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         with open("{}/pizzly.out".format(sample), "w") as plog:
             # FIXME this needs to change:
             for line in pizzly("fusion.txt", k=31,
-                               gtf="{}/transcripts.gtf.gz".format(pdir),
+                               gtf="{}/Homo_sapiens.GRCh37.87.gtf.gz".format(pdir),
                                align_score=2, insert_size=400,
-                               fasta="{}/transcripts.fasta.gz".format(pdir),
+                               fasta="{}/Homo_sapiens.GRCh37.cdna.all.fa".format(pdir),
                                output="{}/{}".format(sample, sample),):
                 LOGGER.info("pizzly: %s", line)
                 plog.write(line)

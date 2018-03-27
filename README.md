@@ -152,6 +152,18 @@ python3 main.py --queue=mixed --bucket-name=<YOUR_BUCKET_NAME> \
 Where `sample_list.txt` is a file containing a list of sample names,
 one per line.
 
+This will print out some information including the job IDs of each job step.
+Keep these to refer to later (see next section).
+
+### Getting information about completed pipelines
+
+Once a pipeline has completed, you can use the `utils.py` script to find out
+
+* which child jobs succeeded, which failed, and what are the log
+  stream names you can use to view the logs of each? (JSON output); and
+* how long did the entire pipeline take for a single sample? (plain text output)
+
+Run `utils.py` without arguments to get further help.
 
 
 ### Possible enhancements

@@ -12,8 +12,6 @@ This code uses the mongodb database of batch transition events. We don't use
 the AWS Batch API because Batch only keeps job information around for 24 hours
 after the job completes.
 
-The environment variable MONGO_URL must be set for this code to work.
-
 """
 
 import json

@@ -10,6 +10,7 @@ name = "pypi"
 sciluigi = "*"
 "boto3" = "*"
 sh = "*"
+pymongo = "*"
 
 
 [dev-packages]

@@ -139,18 +139,21 @@ Make sure you have obtained [S3](https://teams.fhcrc.org/sites/citwiki/SciComp/P
 credentials and the [additional permissions](https://fredhutch.github.io/aws-batch-at-hutch-docs/)
 needed to run AWS Batch.
 
+Create a text file containing the names of your samples, one per line
+(they can contain the .bam suffix or not). Upload this file to S3.
+
 You need to run some one-time steps (see the next section) which
 will eventually be automated. Once those have been done, you can
 submit your job:
 
 ```
 python3 main.py --queue=mixed --bucket-name=<YOUR_BUCKET_NAME> \
-  --pipeline-name='first-test-pipeline' --sample-list-file=./sample_list.txt
+  --pipeline-name='first-test-pipeline' --sample-list-file=s3://mybucket/mysamplelist.txt
 
 ```
 
-Where `sample_list.txt` is a file containing a list of sample names,
-one per line.
+Where `s3://mybucket/mysamplelist.txt` is
+an S3 URL pointing to the file containing the list of samples you want to process.
 
 This will print out some information including the job IDs of each job step.
 Keep these to refer to later (see next section).

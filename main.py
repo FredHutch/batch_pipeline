@@ -13,9 +13,12 @@ per line.
 """
 
 import datetime
+import io
 import logging
 import os
 import sys
+from urllib.parse import urlparse
+
 import boto3
 
 
@@ -80,18 +83,23 @@ class BatchJobRunner(sciluigi.Task):
     def run(self):
         self.job_def_revision = get_latest_jobdef_revision(self.job_def_name)
         jobdef = self.job_def_name + ":" + str(self.job_def_revision)
-        with open(self.sample_list_file) as filehandle:
-            samples = filehandle.readlines()
-        samples = [x.strip() for x in samples]
+        bytebuf = io.BytesIO()
+        s3client = boto3.client("s3")
+        url = urlparse(self.sample_list_file)
+        bucket = url.netloc
+        path = url.path.lstrip("/")
+        s3client.download_fileobj(bucket, path, bytebuf)
+        raw_sample = bytebuf.getvalue().decode("utf-8")
+        samples = raw_sample.splitlines()
         samples = [x.replace(".bam", "") for x in samples]
-        sample_list = ",".join(samples)
+
         array_size = len(samples)
         if array_size < 2:
             LOG.info("You must specify at least two samples to run an array job!")
             sys.exit(1)
         env = [
             dict(name="BUCKET_NAME", value=self.bucket_name),
-            dict(name="LIST_OF_SAMPLES", value=sample_list),
+            dict(name="LIST_OF_SAMPLES", value=self.sample_list_file),
             dict(name="BATCH_FILE_S3_URL", value=self.script_url)
         ]
 

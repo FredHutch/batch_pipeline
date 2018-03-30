@@ -4,14 +4,33 @@ a shell-script-like python script to run kallisto
 in AWS batch
 """
 
+import io
 import os
 import logging
 import shutil
 import sys
 import time
 import traceback
+from urllib.parse import urlparse
 
+
+import boto3
 import sh
+
+
+def get_samples(): # FIXME put in common code file
+    "retrieve list of samples from s3"
+    bytebuf = io.BytesIO()
+    s3client = boto3.client("s3")
+    url = urlparse(os.getenv("LIST_OF_SAMPLES"))
+    bucket = url.netloc
+    path = url.path.lstrip("/")
+    s3client.download_fileobj(bucket, path, bytebuf)
+    raw_sample = bytebuf.getvalue().decode("utf-8")
+    samples = raw_sample.splitlines()
+    samples = [x.replace(".bam", "") for x in samples]
+    return samples
+
 
 def is_on_aws():
     "check if we are running on aws"
@@ -60,7 +79,7 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         if is_array_job:
             sample_index = int(os.getenv("AWS_BATCH_JOB_ARRAY_INDEX"))
             LOGGER.info("This is an array job and the index is %d.", sample_index)
-            samples = os.getenv("LIST_OF_SAMPLES").split(",")
+            samples = get_samples()
             # get sample from list of samples using job array index
             sample = samples[sample_index].strip()
         else:

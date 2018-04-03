@@ -102,7 +102,7 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         LOGGER.info("Running picard...")
         logfile = "{}_picard.stderr".format(sample)
         with open(logfile, "w") as plog:
-            for line in java("-Xmx10g", "-Xms2g", "-jar",
+            for line in java("-Xmx12g", "-Xms2g", "-jar",
                              "{}/picard.jar".format(ebrootpicard),
                              "SamToFastq", "QUIET=true",
                              "INCLUDE_NON_PF_READS=true",

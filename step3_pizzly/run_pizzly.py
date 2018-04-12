@@ -92,14 +92,22 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         os.makedirs(sample, exist_ok=True)
         # run kallisto, put output in file
         pizzly = sh.pizzly.bake(_iter=True, _err_to_out=True, _long_sep=" ")
+        reference = os.getenv("REFERENCE")
+        LOGGER.info("Reference is %s.", reference)
+        gtf = "Homo_sapiens.{}.gtf.gz".format(reference)
+        fasta = "Homo_sapiens.{}.cdna.all.fa.gz".format(reference.split(".")[0])
+        LOGGER.info("Downloading reference fasta file %s...", fasta)
+        for line in aws("s3", "cp", "s3://{}/SR/{}/{}".format(bucket, reference, fasta), "/tmp/"):
+            print(line)
+        LOGGER.info("Downloading reference gtf file %s...", gtf)
+        for line in aws("s3", "cp", "s3://{}/SR/{}/{}".format(bucket, reference, gtf), "/tmp/"):
+            print(line)
         LOGGER.info("Running pizzly...")
-        pdir = "/usr/local/pizzly_test_files"
         with open("{}/pizzly.out".format(sample), "w") as plog:
-            # FIXME this needs to change:
             for line in pizzly("fusion.txt", k=31,
-                               gtf="{}/Homo_sapiens.GRCh37.87.gtf.gz".format(pdir),
+                               gtf="/tmp/{}".format(gtf),
                                align_score=2, insert_size=400,
-                               fasta="{}/Homo_sapiens.GRCh37.cdna.all.fa".format(pdir),
+                               fasta="/tmp/{}".format(fasta),
                                output="{}/{}".format(sample, sample),):
                 LOGGER.info("pizzly: %s", line)
                 plog.write(line)
@@ -108,7 +116,7 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         # copy pizzly output to S3
         LOGGER.info("Copying all pizzly output to S3...")
         for line in aws("s3", "cp", "--sse", "AES256", "--recursive", "--include", "*",
-                        sample, "s3://{}/SR/pizzly_out/{}/".format(bucket, sample)):
+                        sample, "s3://{}/SR/pizzly_out/{}_{}/".format(bucket, sample, reference)):
             print(line)
         LOGGER.info("Completed without errors.")
     # handle errors

@@ -85,7 +85,10 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         else:
             sample = os.getenv("SAMPLE_NAME").strip()
         LOGGER.info("Sample is %s.", sample)
-        index = "GRCh37.87.idx"
+        reference = os.getenv("REFERENCE")
+        LOGGER.info("Reference is %s.", reference)
+        index = "Homo_sapiens.{}.idx".format(reference)
+        LOGGER.info("Index is %s.", index)
         fastqs = []
         #aws = sh.aws.bake(_iter=True, _err_to_out=True, _out_bufsize=3000)
         # get fastq files
@@ -101,9 +104,9 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         r2 = fastqs[1] # pylint: disable=invalid-name
         # get index file
         LOGGER.info("Downloading index file...")
-        if not os.path.exists(index): # for testing, TODO remove
-            LOGGER.info(sh.aws("s3", "cp", "s3://{}/SR/{}".format(bucket, index), "."))
-            time.sleep(5)
+        sh.aws("s3", "cp", "s3://{}/SR/{}/{}".format(bucket, \
+          reference, index), "/tmp/")
+        time.sleep(5)
         # create output dir
         os.makedirs(sample, exist_ok=True)
         LOGGER.info("downloaded files, listing directory...")
@@ -111,7 +114,7 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         # run kallisto, put output in file
         # kallisto = sh.kallisto.bake(_iter=True, _err_to_out=True, _long_sep=" ")
         LOGGER.info("Running kallisto...")
-        sh.kallisto('quant', "-i", index, "-o", sample, "-b",
+        sh.kallisto('quant', "-i", "/tmp/{}".format(index), "-o", sample, "-b",
                     30, "--fusion", "--rf-stranded", r1, r2,
                     _err_to_out=True, _out="{}/kallisto.out".format(sample))
         LOGGER.info("kallisto output:")
@@ -120,7 +123,9 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
         # copy kallisto output to S3
         LOGGER.info("Copying all kallisto output to S3...")
         LOGGER.info(sh.aws("s3", "cp", "--sse", "AES256", "--recursive", "--include", "*",
-                           sample, "s3://{}/SR/kallisto_out/{}/".format(bucket, sample)))
+                           sample, "s3://{}/SR/kallisto_out/{}_{}/".format(bucket,
+                                                                           sample,
+                                                                           reference)))
             # print(line)
         LOGGER.info("Completed without errors.")
     # handle errors

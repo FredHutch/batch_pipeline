@@ -147,7 +147,7 @@ will eventually be automated. Once those have been done, you can
 submit your job:
 
 ```
-python3 main.py --queue=mixed --bucket-name=<YOUR_BUCKET_NAME> \
+python3 main.py --queue=mixed --bucket-name=<YOUR_BUCKET_NAME> --reference=GRCh38.91 \
   --pipeline-name='first-test-pipeline' --sample-list-file=s3://mybucket/mysamplelist.txt
 
 ```
@@ -185,6 +185,8 @@ Run `utils.py` without arguments to get further help.
   * Building and pushing the Docker images.
   * Creating the job definitions for each job.
   * Copying the batch-side scripts to S3 before starting a job.
+  * Putting the reference files in S3 in the expected location
+    (i.e. files for  `GRCh38.91` should go under `s3://<bucket-name>/SR/GRCh38.91/`).
 
 See the [issues](https://github.com/FredHutch/batch_pipeline/issues) page
 for more detail.

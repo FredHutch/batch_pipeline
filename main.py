@@ -4,7 +4,7 @@ main workflow class, etc.
 
 Run me like this:
 
-python3 main.py --queue=q-queue-name --bucket-name=a-bucket-name \
+python3 main.py --queue=q-queue-name --bucket-name=a-bucket-name --reference=GRCh38.91 \
   --pipeline-name='a-name-for-this-pipeline' --sample-list-file=afilename
 
 Where `afilename` is a file containing a list of sample names, one
@@ -38,6 +38,7 @@ class WF(sciluigi.WorkflowTask):
     bucket_name = sciluigi.Parameter()
     pipeline_name = sciluigi.Parameter()
     sample_list_file = sciluigi.Parameter()
+    reference = sciluigi.Parameter()
 
     def workflow(self):
         now = datetime.datetime.now()
@@ -47,12 +48,14 @@ class WF(sciluigi.WorkflowTask):
         step1 = self.new_task('step1', StepOneJobRunner, queue=self.queue,
                               bucket_name=self.bucket_name,
                               pipeline_name=self.pipeline_name,
-                              sample_list_file=self.sample_list_file)
+                              sample_list_file=self.sample_list_file,
+                              reference=self.reference)
 
         step2 = self.new_task('step2', StepTwoJobRunner, queue=self.queue,
                               bucket_name=self.bucket_name,
                               pipeline_name=self.pipeline_name,
-                              sample_list_file=self.sample_list_file)
+                              sample_list_file=self.sample_list_file,
+                              reference=self.reference)
 
 
         step2.in_step1 = step1.out_jobid
@@ -61,7 +64,8 @@ class WF(sciluigi.WorkflowTask):
         step3 = self.new_task('step3', StepThreeJobRunner, queue=self.queue,
                               bucket_name=self.bucket_name,
                               pipeline_name=self.pipeline_name,
-                              sample_list_file=self.sample_list_file)
+                              sample_list_file=self.sample_list_file,
+                              reference=self.reference)
 
         step3.in_step2 = step2.out_jobid
         return step3
@@ -76,6 +80,7 @@ class BatchJobRunner(sciluigi.Task):
     bucket_name = sciluigi.Parameter()
     pipeline_name = sciluigi.Parameter()
     sample_list_file = sciluigi.Parameter()
+    reference = sciluigi.Parameter()
 
     job_name = None
     submit_args = None
@@ -100,7 +105,8 @@ class BatchJobRunner(sciluigi.Task):
         env = [
             dict(name="BUCKET_NAME", value=self.bucket_name),
             dict(name="LIST_OF_SAMPLES", value=self.sample_list_file),
-            dict(name="BATCH_FILE_S3_URL", value=self.script_url)
+            dict(name="BATCH_FILE_S3_URL", value=self.script_url),
+            dict(name="REFERENCE", value=self.reference)
         ]
 
 

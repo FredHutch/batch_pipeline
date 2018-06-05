@@ -83,17 +83,17 @@ def main(): # pylint: disable=too-many-locals, too-many-branches, too-many-state
             sample = os.getenv("SAMPLE_NAME").strip()
         LOGGER.info("Sample is %s.", sample)
         aws = sh.aws.bake(_iter=True, _err_to_out=True, _out_bufsize=3000)
+        reference = os.getenv("REFERENCE")
+        LOGGER.info("Reference is %s.", reference)
         LOGGER.info("Downloading fusion file...")
         if not os.path.exists("fusion.txt"): # for testing TODO remove
             for line in aws("s3", "cp",
-                            "s3://{}/SR/kallisto_out/{}/fusion.txt".format(bucket, sample), "."):
+                            "s3://{}/SR/kallisto_out/{}_{}/fusion.txt".format(bucket, sample, reference), "."):
                 print(line)
         # create output dir
         os.makedirs(sample, exist_ok=True)
         # run kallisto, put output in file
         pizzly = sh.pizzly.bake(_iter=True, _err_to_out=True, _long_sep=" ")
-        reference = os.getenv("REFERENCE")
-        LOGGER.info("Reference is %s.", reference)
         gtf = "Homo_sapiens.{}.gtf.gz".format(reference)
         fasta = "Homo_sapiens.{}.cdna.all.fa.gz".format(reference.split(".")[0])
         LOGGER.info("Downloading reference fasta file %s...", fasta)

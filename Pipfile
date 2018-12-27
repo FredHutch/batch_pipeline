@@ -1,19 +1,15 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 sciluigi = "*"
 "boto3" = "*"
 sh = "*"
 pymongo = "*"
-
+luigi = "*"
 
 [dev-packages]
-
 pylint = "*"
 ipython = "*"
